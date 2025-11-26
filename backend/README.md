@@ -359,11 +359,11 @@ node src/index.js
 
 ## 🚧 Próximas Implementaciones
 
-- [ ] Integración completa de Socket.io para mensajes en tiempo real
-- [ ] Sistema de salas de chat grupales
-- [ ] Notificaciones en tiempo real
-- [ ] Sistema de amigos/contactos
-- [ ] Mensajes con estado (entregado, leído)
+- Integración completa de Socket.io para mensajes en tiempo real
+- Sistema de salas de chat grupales
+- Notificaciones en tiempo real
+- Sistema de amigos/contactos
+- Mensajes con estado (entregado, leído)
 
 ---
 

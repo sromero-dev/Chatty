@@ -1,5 +1,6 @@
 import express from "express";
 import dotenv from "dotenv";
+import cors from "cors";
 import cookieParser from "cookie-parser";
 import authRoutes from "./routes/auth.route.js";
 import messageRoutes from "./routes/message.route.js";
@@ -10,8 +11,14 @@ const app = express();
 
 const PORT = process.env.PORT || 5002;
 
-app.use(express.json()); //TODO En el readme marcar la importancia del orden
+app.use(express.json()); // Allows you to parse JSON
 app.use(cookieParser()); // Allows you to parse cookie (grab value out of them)
+app.use(
+  cors({
+    origin: "http://localhost:5173",
+    cretentials: true,
+  })
+);
 
 app.use("/api/auth", authRoutes);
 app.use("/api/message", messageRoutes);
