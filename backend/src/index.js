@@ -16,7 +16,7 @@ app.use(cookieParser()); // Allows you to parse cookie (grab value out of them)
 app.use(
   cors({
     origin: "http://localhost:5173",
-    cretentials: true,
+    credentials: true,
   })
 );
 
