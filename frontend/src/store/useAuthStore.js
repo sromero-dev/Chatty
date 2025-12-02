@@ -52,6 +52,35 @@ export const useAuthStore = create((set) => ({
     }
   },
 
+  login: async (data) => {
+    try {
+      set({ isLoggingIn: true });
+      const res = await axiosInstance.post("/auth/login", data);
+      set({ authUser: res.data });
+      toast.success("Logged in successfully");
+    } catch (error) {
+      console.error("Error signing up: ", error);
+
+      let errorMessage = "An error occurred during login";
+
+      if (error.response) {
+        errorMessage =
+          error.response.data?.message ||
+          error.response.data?.error ||
+          error.response.statusText ||
+          `Server error: ${error.response.status}`;
+      } else if (error.request) {
+        errorMessage = "No response from server. Please check your connection.";
+      } else {
+        errorMessage = error.message || "Error setting up the request";
+      }
+
+      toast.error(errorMessage);
+    } finally {
+      set({ isLoggingIn: false });
+    }
+  },
+
   logout: async () => {
     try {
       await axiosInstance.post("/auth/logout");
@@ -77,4 +106,6 @@ export const useAuthStore = create((set) => ({
       toast.error(errorMessage);
     }
   },
+
+  updateProfile: async (data) => {},
 }));
