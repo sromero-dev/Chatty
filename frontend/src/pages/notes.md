@@ -127,3 +127,5 @@ Voy a explicar las propiedades CSS utilizadas en este fragmento de código y por
 - Cuando la lógica de presentación es compleja y requiere JavaScript
 
 En resumen, el código utiliza CSS (específicamente Tailwind CSS) porque proporciona un sistema de diseño consistente, eficiente y mantenible, separando adecuadamente las preocupaciones de presentación de la lógica de la aplicación.
+
+# Sign Up Page - Desglose
