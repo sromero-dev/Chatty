@@ -9,8 +9,8 @@ import LoginPage from "./pages/LoginPage";
 import SignUpPage from "./pages/SignUpPage";
 import SettingPage from "./pages/Settings";
 import ProfilePage from "./pages/ProfilePage";
-import { useAuthStore } from "./store/useAuthStore";
-import { useThemeStore } from "./store/useThemeStore";
+import { useAuthStore } from "./hooks/useAuthStore";
+import { useThemeStore } from "./hooks/useThemeStore";
 
 const App = () => {
   const { authUser, checkAuth, isCheckingAuth } = useAuthStore();

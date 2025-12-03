@@ -1,5 +1,5 @@
 import { THEMES } from "../constants";
-import { useThemeStore } from "../store/useThemeStore";
+import { useThemeStore } from "../hooks/useThemeStore";
 import { useState, useRef, useEffect } from "react";
 import Preview from "../components/Preview";
 

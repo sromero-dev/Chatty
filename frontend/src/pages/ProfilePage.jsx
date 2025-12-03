@@ -1,4 +1,4 @@
-import { useAuthStore } from "../store/useAuthStore";
+import { useAuthStore } from "../hooks/useAuthStore";
 import { Camera, Mail, User } from "lucide-react";
 import { useState } from "react";
 import { toast } from "react-hot-toast";

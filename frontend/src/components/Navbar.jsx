@@ -1,4 +1,5 @@
-import { useAuthStore } from "../store/useAuthStore";
+import { useAuthStore } from "../hooks/useAuthStore";
+import { useAutoCloseMenu } from "../hooks/useAutoCloseMenu";
 import { Link, useLocation } from "react-router-dom";
 import {
   ArrowBigRightDash,
@@ -27,10 +28,10 @@ function Navbar() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Cerrar menú móvil al cambiar ruta
-  useEffect(() => {
-    setIsMobileMenuOpen(false);
-  }, [location.pathname]);
+  // Use the custom hook instead of the useEffect
+  useAutoCloseMenu(isMobileMenuOpen, () => setIsMobileMenuOpen(false), [
+    location.pathname,
+  ]);
 
   // Cerrar menú móvil al presionar ESC
   useEffect(() => {
@@ -51,6 +52,11 @@ function Navbar() {
 
   const toggleMobileMenu = useCallback(() => {
     setIsMobileMenuOpen((prev) => !prev);
+  }, []);
+
+  // Función para cerrar menú manualmente (usada en clics de enlaces)
+  const closeMobileMenu = useCallback(() => {
+    setIsMobileMenuOpen(false);
   }, []);
 
   // Memoizar las rutas para evitar recálculos
@@ -113,12 +119,12 @@ function Navbar() {
       >
         <div className="container mx-auto px-4 h-16">
           <div className="flex items-center justify-between h-full">
-            {/* Logo */}
+            {/* Logo - CORREGIDO: bg-gradient-to-r en lugar de bg-linear-to-r */}
             <Link
               to="/"
               className="flex items-center gap-2.5 group relative"
               aria-label="Chatty Home"
-              onClick={() => setIsMobileMenuOpen(false)}
+              onClick={closeMobileMenu}
             >
               <div className="size-9 rounded-lg bg-primary/10 flex items-center justify-center transition-transform group-hover:scale-110 group-active:scale-95">
                 <MessageSquare
@@ -126,7 +132,7 @@ function Navbar() {
                   aria-hidden="true"
                 />
               </div>
-              <h1 className="text-lg font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+              <h1 className="text-lg font-bold bg-linear-to-r from-primary to-secondary bg-clip-text text-transparent">
                 Chatty
                 <span className="text-primary animate-pulse">!</span>
               </h1>
@@ -137,7 +143,7 @@ function Navbar() {
               className="hidden md:flex items-center gap-2.5"
               aria-label="Desktop navigation"
             >
-              {navItems.map((item, index) =>
+              {navItems.map((item) =>
                 item.isButton ? (
                   <button
                     key={item.label}
@@ -224,6 +230,7 @@ function Navbar() {
                       aria-current={
                         location.pathname === item.to ? "page" : undefined
                       }
+                      onClick={closeMobileMenu}
                     >
                       <item.icon className="size-5" aria-hidden="true" />
                       <span>{item.label}</span>
