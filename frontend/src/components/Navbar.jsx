@@ -119,7 +119,6 @@ function Navbar() {
       >
         <div className="container mx-auto px-4 h-16">
           <div className="flex items-center justify-between h-full">
-            {/* Logo - CORREGIDO: bg-gradient-to-r en lugar de bg-linear-to-r */}
             <Link
               to="/"
               className="flex items-center gap-2.5 group relative"
@@ -132,7 +131,7 @@ function Navbar() {
                   aria-hidden="true"
                 />
               </div>
-              <h1 className="text-lg font-bold bg-linear-to-r from-primary to-secondary bg-clip-text text-transparent">
+              <h1 className="text-lg font-bold bg-linear-to-r from-primary to-secondary bg-clip-text text-transparent transition-transform group-hover:-rotate-12">
                 Chatty
                 <span className="text-primary animate-pulse">!</span>
               </h1>
