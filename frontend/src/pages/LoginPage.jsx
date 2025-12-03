@@ -14,7 +14,10 @@ function LoginPage() {
   const { logout, login, isLoggingIn } = useAuthStore();
 
   const validateForm = () => {
-    if (!formData.email.trim()) return toast.error("Email is required");
+    if (!formData.email || !formData.password) {
+      return toast.error("All fields are required");
+    }
+    console.log("Email: " + formData.email);
     if (!/\S+@\S+\.\S+/.test(formData.email))
       return toast.error("Invalid email");
     if (!formData.password.trim()) return toast.error("Password is required");
@@ -27,8 +30,12 @@ function LoginPage() {
 
     const success = validateForm();
 
-    if (success) await login(formData);
-    else toast.error("Invalid email or password");
+    console.log("Success: " + success);
+
+    // In JS return false or toast.error does not mean that the form is invalid that's why we need to check if success is true
+    if (success === true) {
+      await login(formData);
+    }
   };
 
   return (

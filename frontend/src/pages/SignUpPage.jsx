@@ -40,7 +40,7 @@ function SignUpPage() {
 
     const success = validateForm();
 
-    if (success) await signup(formData);
+    if (success === true) await signup(formData);
   };
 
   return (

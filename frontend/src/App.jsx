@@ -18,7 +18,7 @@ const App = () => {
     checkAuth();
   }, [checkAuth]);
 
-  console.log("authUser: ", authUser);
+  console.log("authUser: ", authUser, "isCheckingAuth: ", isCheckingAuth);
 
   if (isCheckingAuth && !authUser) {
     return (
@@ -26,8 +26,6 @@ const App = () => {
         <Loader className="size-10 animate-spin" />
       </div>
     );
-  } else {
-    console.warn("authUser: ", authUser, "isCheckingAuth: ", isCheckingAuth);
   }
 
   return (
