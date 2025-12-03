@@ -1,4 +1,4 @@
-# Documentación técnica
+# Documentación técnica (PROYECTO EN DESARROLLO)
 
 ## STACK
 
