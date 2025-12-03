@@ -46,6 +46,8 @@ export const signup = async (req, res) => {
         fullName: newUser.fullName,
         email: newUser.email,
         profilePic: newUser.profilePic,
+        createdAt: newUser.createdAt,
+        updatedAt: newUser.updatedAt,
       });
     } else {
       // If user is not created
@@ -86,6 +88,8 @@ export const login = async (req, res) => {
       fullName: user.fullName,
       email: user.email,
       profilePic: user.profilePic,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
     });
   } catch (error) {
     console.log("Error logging in user: ", error);
@@ -116,21 +120,37 @@ export const updateProfile = async (req, res) => {
       return res.status(400).json({ message: "Profile picture is required." }); // Done like this because I wanted to use Cloudinary
     }
 
-    const uploadResponde = await cloudinary.uploader.upload(profilePic);
+    if (!cloudinary.config().cloud_name) {
+      console.error("Cloudinary no está configurado");
+      return res
+        .status(500)
+        .json({ message: "Error de configuración del servidor" });
+    }
+
+    const uploadResponse = await cloudinary.uploader.upload(profilePic, {
+      folder: "public",
+      resource_type: "image",
+    });
+
     const updatedUser = await User.findByIdAndUpdate(
       userId,
       {
-        profilePic: uploadResponde.secure_url, // secure_url is the url of the image
+        profilePic: uploadResponse.secure_url,
       },
-      { new: true } // new is true to return the updated user
-    );
+      { new: true }
+    ).select("-password");
 
     res.status(200).json({
-      updatedUser,
+      _id: updatedUser._id,
+      fullName: updatedUser.fullName,
+      email: updatedUser.email,
+      profilePic: updatedUser.profilePic,
+      createdAt: updatedUser.createdAt,
+      updatedAt: updatedUser.updatedAt,
     });
   } catch (error) {
-    console.log("Error updating profile: ", error);
-    res.state(500).json({ message: "Server error: " + error });
+    console.log("Cloudinary Error updating profile: ", error);
+    res.status(500).json({ message: "Server error: " + error });
   }
 };
 
