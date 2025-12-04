@@ -167,7 +167,7 @@ function Settings() {
               onClick={togglePreview}
               className="btn btn-ghost btn-sm text-base-content/70"
             >
-              Click anywhere outside or <b>press ESC</b> to close
+              Click anywhere outside or press ESC to close
             </button>
           </div>
         </div>

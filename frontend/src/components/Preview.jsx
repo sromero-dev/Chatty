@@ -1,4 +1,5 @@
 import { Send, Circle } from "lucide-react";
+import { useAuthStore } from "../hooks/useAuthStore";
 
 function Preview() {
   const PREVIEW_MESSAGES = [
@@ -13,6 +14,8 @@ function Preview() {
       isSent: true,
     },
   ];
+
+  const { authUser } = useAuthStore();
 
   return (
     <div className="space-y-4 animate-fadeIn">
@@ -51,25 +54,40 @@ function Preview() {
               }`}
             >
               {!message.isSent && (
-                <div className="size-8 rounded-full bg-secondary flex items-center justify-center text-secondary-content text-sm font-medium">
+                <div className="size-8 rounded-full bg-accent flex items-center justify-center text-secondary-content text-sm font-medium">
                   JD
                 </div>
+              )}
+              {message.isSent && (
+                <img
+                  src={authUser.profilePic || "/default.png"}
+                  alt="Profile"
+                  className="size-8 rounded-full object-cover border-0 mt-11"
+                />
               )}
               <div
                 className={`
                   max-w-[70%] rounded-2xl p-4 shadow-sm
                   ${
                     message.isSent
-                      ? "bg-primary text-primary-content rounded-br-none"
-                      : "bg-base-200 rounded-tl-none"
+                      ? "bg-base-200 rounded-br-none"
+                      : "bg-base-200/70 rounded-tl-none"
                   }
                 `}
               >
-                <p className="text-sm leading-relaxed">{message.text}</p>
+                <p
+                  className={`text-sm leading-relaxed ${
+                    message.isSent
+                      ? "text-base-content"
+                      : "text-base-content/85"
+                  }`}
+                >
+                  {message.text}
+                </p>
                 <div
                   className={`flex justify-end mt-2 ${
                     message.isSent
-                      ? "text-primary-content/70"
+                      ? "text-base-content/70"
                       : "text-base-content/70"
                   }`}
                 >
@@ -90,7 +108,7 @@ function Preview() {
               value="This is a preview of the chat interface..."
               readOnly
             />
-            <button className="btn btn-primary gap-2">
+            <button className="btn bg-amber-800 hover:bg-amber-700 hover:text-amber-50 hover:border-amber-700 text-amber-100 gap-2">
               <span>Send</span>
               <Send size={16} />
             </button>
