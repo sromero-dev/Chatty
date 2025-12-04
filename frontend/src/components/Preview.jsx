@@ -60,7 +60,7 @@ function Preview() {
               )}
               {message.isSent && (
                 <img
-                  src={authUser.profilePic || "/default.png"}
+                  src={authUser?.profilePic || "/default.png"}
                   alt="Profile"
                   className="size-8 rounded-full object-cover border-0 mt-11"
                 />
