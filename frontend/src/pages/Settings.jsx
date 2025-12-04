@@ -11,26 +11,6 @@ function Settings() {
   const buttonRef = useRef(null);
   const containerRef = useRef(null);
 
-  // Efecto para scroll automático cuando se muestra el preview
-  useEffect(() => {
-    if (isShowing && previewRef.current) {
-      // Esperar a que la animación de altura se complete
-      setTimeout(() => {
-        previewRef.current.scrollIntoView({
-          behavior: "smooth",
-          block: "center",
-        });
-      }, 400);
-    } else if (!isShowing && gridRef.current) {
-      setTimeout(() => {
-        gridRef.current.scrollIntoView({
-          behavior: "smooth",
-          block: "start",
-        });
-      }, 300);
-    }
-  }, [isShowing]);
-
   useEffect(() => {
     const handleEsc = (e) => {
       if (e.key === "Escape" && isShowing) {
@@ -47,10 +27,10 @@ function Settings() {
   };
 
   return (
-    <div className="h-[calc(100vh-100px)] mt-4 flex-1 overflow-hidden">
+    <div className="h-[calc(100vh-68px)] flex-1 overflow-hidden">
       <div
         ref={containerRef}
-        className={`h-screen overflow-y-auto container mx-auto px-4 pt-14 max-w-5xl pb-20 relative ${
+        className={`h-[calc(100vh-72px)] overflow-y-auto container mx-auto px-4 pt-6 max-w-5xl relative ${
           isShowing ? "overflow-hidden" : ""
         }`}
       >
@@ -63,7 +43,7 @@ function Settings() {
         )}
 
         <div
-          className={`relative z-10 transition-all duration-500 ${
+          className={`relative z-10 transition-all  duration-500 ${
             isShowing ? "opacity-50 pointer-events-none" : "opacity-100"
           }`}
         >

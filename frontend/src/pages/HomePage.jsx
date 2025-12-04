@@ -13,18 +13,7 @@ function HomePage() {
           <div className="flex h-full rounded-lg overflow-hidden">
             <Sidebar />
 
-            {/* Área principal sin scroll */}
-            <div className="flex flex-1 items-center justify-center overflow-hidden">
-              {!selectedUser ? (
-                <NoChatSelected />
-              ) : (
-                <div className="h-full overflow-y-auto">
-                  <div>
-                    <ChatContainer />
-                  </div>
-                </div>
-              )}
-            </div>
+            {!selectedUser ? <NoChatSelected /> : <ChatContainer />}
           </div>
         </div>
       </div>

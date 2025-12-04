@@ -1,7 +1,7 @@
 import { X } from "lucide-react";
 import { useAuthStore } from "../hooks/useAuthStore";
 
-function ChatHeader() {
+const ChatHeader = () => {
   const { selectedUser, setSelectedUser } = useAuthStore();
   const { onlineUsers } = useAuthStore();
 
@@ -32,12 +32,12 @@ function ChatHeader() {
             onClick={() => setSelectedUser(null)}
             className="btn btn-ghost btn-circle"
           >
-            <X className="size-6" />
+            <X />
           </button>
         </div>
       </div>
     </div>
   );
-}
+};
 
 export default ChatHeader;
