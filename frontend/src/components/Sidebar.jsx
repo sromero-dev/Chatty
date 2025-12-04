@@ -4,20 +4,18 @@ import SidebarSkeleton from "./skeletons/SidebarSkeleton";
 import { Users } from "lucide-react";
 
 function Sidebar() {
-  const { getUsers, users, selectedUsers, setSelectedUser, isUsersLoading } =
+  const { getUsers, users, selectedUser, setSelectedUser, isUsersLoading } =
     useChatStore();
 
-  const onlineUsers = [];
+  const onlineUsers = users
+    .filter((user) => user.isOnline)
+    .map((user) => user._id);
 
   useEffect(() => {
     getUsers();
   }, [getUsers]);
 
-  if (isUsersLoading) {
-    setTimeout(() => {
-      return <SidebarSkeleton />;
-    }, 300);
-  }
+  if (isUsersLoading) return <SidebarSkeleton />;
 
   return (
     <aside className="h-full w-20 lg:w-72 border-r border-base-300 flex flex-col transition-all duration-200 overflow-hidden">
@@ -33,10 +31,10 @@ function Sidebar() {
       <div className="flex-1 overflow-y-auto w-full p-3">
         {users.map((user) => (
           <button
-            key={user.id}
+            key={user._id}
             onClick={() => setSelectedUser(user)}
             className={`w-full p-3 flex items-center gap-3 cursor-pointer hover:bg-base-300 transition-colors rounded-lg ${
-              selectedUsers?._id === user._id
+              selectedUser?._id === user._id
                 ? "bg-base-300 ring-1 ring-base-300"
                 : ""
             }`}

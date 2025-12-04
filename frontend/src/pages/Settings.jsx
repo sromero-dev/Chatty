@@ -50,7 +50,7 @@ function Settings() {
     <div className="h-[calc(100vh-100px)] mt-4 flex-1 overflow-hidden">
       <div
         ref={containerRef}
-        className={`h-screen overflow-y-auto container mx-auto px-4 pt-6 max-w-5xl pb-20 relative ${
+        className={`h-screen overflow-y-auto container mx-auto px-4 pt-14 max-w-5xl pb-20 relative ${
           isShowing ? "overflow-hidden" : ""
         }`}
       >

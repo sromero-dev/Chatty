@@ -19,7 +19,9 @@ function HomePage() {
                 <NoChatSelected />
               ) : (
                 <div className="h-full overflow-y-auto">
-                  <ChatContainer />
+                  <div>
+                    <ChatContainer />
+                  </div>
                 </div>
               )}
             </div>

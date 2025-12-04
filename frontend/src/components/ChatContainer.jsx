@@ -1,17 +1,31 @@
+import { LucideClockFading } from "lucide-react";
+import { useChatStore } from "../store/ChatStore";
+import { useEffect } from "react";
+import ChatHeader from "./ChatHeader";
+import MessageInput from "./MessageInput";
+
 function ChatContainer() {
+  const { messages, getMessages, isMessagesLoading, selectedUser } =
+    useChatStore();
+
+  useEffect(() => {
+    if (selectedUser) {
+      getMessages(selectedUser._id);
+    }
+  }, [selectedUser, getMessages]);
+
+  useEffect(() => {
+    const chatContainer = document.querySelector(".chat-container");
+    chatContainer.scrollTop = chatContainer.scrollHeight;
+  }, [messages]);
+
+  if (isMessagesLoading) return <LucideClockFading />;
+
   return (
-    <div className="h-full p-4">
-      <div className="space-y-4">
-        {/* Ejemplo de contenido largo */}
-        {Array.from({ length: 30 }).map((_, i) => (
-          <div key={i} className="p-4 bg-base-200 rounded-lg">
-            <div className="font-medium">Mensaje #{i + 1}</div>
-            <div className="text-sm text-base-content/70">
-              Este es un mensaje de ejemplo para demostrar el scroll interno.
-            </div>
-          </div>
-        ))}
-      </div>
+    <div className="flex-1 flex flex-col overflow-auto">
+      <ChatHeader />
+      {/* Messages */}
+      <MessageInput />
     </div>
   );
 }

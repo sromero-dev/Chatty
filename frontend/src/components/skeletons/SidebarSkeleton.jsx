@@ -17,7 +17,6 @@ const SidebarSkeleton = () => {
           <div key={i} className="w-full p-3 flex items-center gap-3">
             {/* Avatar Skeleton */}
             <div className="relative mx-auto lg:mx-0">
-              algo
               <div className="skeleton size-12 rounded-full" />
             </div>
 

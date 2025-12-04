@@ -47,6 +47,7 @@ export const useChatStore = create((set) => ({
   },
 
   setSelectedUser: (user) => {
+    console.log(user);
     set({ selectedUser: user });
   },
 }));
