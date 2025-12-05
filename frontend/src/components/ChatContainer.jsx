@@ -1,44 +1,51 @@
-import { useChatStore } from "../hooks/useChatStore";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
+
 import ChatHeader from "./ChatHeader";
 import MessageInput from "./MessageInput";
 import { useAuthStore } from "../hooks/useAuthStore";
+import { useChatStore } from "../hooks/useChatStore";
 import { formatMessageTime } from "../lib/utils";
 
 const ChatContainer = () => {
-  const { messages, getMessages, isMessagesLoading, selectedUser } =
-    useChatStore();
-
+  const { messages, isMessagesLoading, selectedUser } = useChatStore();
   const { authUser } = useAuthStore();
+  const messageEndRef = useRef(null);
 
   useEffect(() => {
-    if (selectedUser) {
-      getMessages(selectedUser._id);
+    if (messageEndRef.current && messages) {
+      messageEndRef.current.scrollIntoView({ behavior: "smooth" });
     }
-  }, [selectedUser, getMessages]);
+  }, [messages]);
 
-  if (isMessagesLoading) return <div>Loading...</div>;
+  if (isMessagesLoading) {
+    return (
+      <div className="flex-1 flex flex-col overflow-auto">
+        <ChatHeader />
+        <MessageInput />
+      </div>
+    );
+  }
 
   return (
-    <div className="flex flex-1 flex-col overflow-auto space-y-auto">
+    <div className="flex-1 flex flex-col overflow-auto">
       <ChatHeader />
 
-      {/* Messages */}
-      <div className="flex-1 flex overflow-y-auto p-4 space-y-4">
+      <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.map((message) => (
           <div
             key={message._id}
             className={`chat ${
-              message.senderId === selectedUser._id ? "chat-end" : "chat-start"
+              message.senderId === authUser._id ? "chat-end" : "chat-start"
             }`}
+            ref={messageEndRef}
           >
-            <div className="chat-image avatar">
+            <div className=" chat-image avatar">
               <div className="size-10 rounded-full border">
                 <img
                   src={
                     message.senderId === authUser._id
-                      ? authUser.image || "/default.png"
-                      : selectedUser.image || "/default.png"
+                      ? authUser.profilePic || "/default.png"
+                      : selectedUser.profilePic || "/default.png"
                   }
                   alt="profile pic"
                 />
@@ -54,7 +61,7 @@ const ChatContainer = () => {
                 <img
                   src={message.image}
                   alt="Attachment"
-                  className="sm:max-w-[200px] sm:max-h-[200px] max-w-[100px] max-h-[100px] rounded-md mb-2"
+                  className="sm:max-w-[200px] rounded-md mb-2"
                 />
               )}
               {message.text && <p>{message.text}</p>}
@@ -67,5 +74,4 @@ const ChatContainer = () => {
     </div>
   );
 };
-
 export default ChatContainer;
