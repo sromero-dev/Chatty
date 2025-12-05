@@ -1,5 +1,7 @@
 import { useEffect } from "react";
 import { useChatStore } from "../hooks/useChatStore";
+import { useAuthStore } from "../hooks/useAuthStore";
+import { useState } from "react";
 import SidebarSkeleton from "./skeletons/SidebarSkeleton";
 import { Users } from "lucide-react";
 
@@ -7,9 +9,12 @@ function Sidebar() {
   const { getUsers, users, selectedUser, setSelectedUser, isUsersLoading } =
     useChatStore();
 
-  const onlineUsers = users
-    .filter((user) => user.isOnline)
-    .map((user) => user._id);
+  const { onlineUsers } = useAuthStore();
+  const [showOnline, setShowOnline] = useState(false);
+
+  const filteredUsers = showOnline
+    ? users.filter((user) => onlineUsers.includes(user._id))
+    : users;
 
   useEffect(() => {
     getUsers();
@@ -25,11 +30,26 @@ function Sidebar() {
           <Users className="size-6" />
           <span className="font-medium hidden lg:block">Contacts</span>
         </div>
+        {/* Checkbox para mostrar usuarios online */}
+        <div className="mt-3 hidden lg:flex items-center gap-2">
+          <label className="cursor-pointer flex items-center gap-2">
+            <input
+              type="checkbox"
+              checked={showOnline}
+              onChange={(e) => setShowOnline(e.target.checked)}
+              className="checkbox checkbox-sm rounded-full"
+            />
+            <span className="text-sm text-zinc-500">Show online users</span>
+          </label>
+          <span className="text-xs text-zinc-400">
+            ({onlineUsers.length - 1} online)
+          </span>
+        </div>
       </div>
 
       {/* Lista de usuarios con scroll interno */}
       <div className="flex-1 overflow-y-auto w-full p-3">
-        {users.map((user) => (
+        {filteredUsers.map((user) => (
           <button
             key={user._id}
             onClick={() => setSelectedUser(user)}
@@ -62,6 +82,10 @@ function Sidebar() {
             </div>
           </button>
         ))}
+
+        {filteredUsers.length === 0 && (
+          <div className="text-center text-zinc-500 py-4">No online users</div>
+        )}
       </div>
     </aside>
   );
