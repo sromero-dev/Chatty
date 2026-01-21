@@ -6,46 +6,62 @@ import logger from "../lib/logger.js";
 import { checkContentModeration } from "../lib/contentFilter.js";
 
 export const signup = async (req, res) => {
-  // Extract user data
   const { email, fullName, password } = req.body;
   try {
+    console.log("Signup attempt:", {
+      email,
+      fullName,
+      passwordLength: password?.length,
+    });
+
     if (!email || !fullName || !password) {
-      // All fields are required
-      return res.status(400).json({ message: "All fields are required." });
+      return res.status(400).json({ message: "All fields are required" });
     }
 
     // Validate email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      return res.status(400).json({ message: "Invalid email format." });
+      return res.status(400).json({ message: "Invalid email format" });
     }
 
-    // hash password -> bcrypt
-    if (password.length < 6) {
-      // Password must be at least 6 characters
-      return res
-        .status(400)
-        .json({ message: "Password must be at least 6 characters long." });
+    // Check if user already exists
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      logger.warn("Signup failed: User already exists", { email });
+      return res.status(400).json({ message: "User already exists" });
     }
 
-    // Verificar que el nombre no contenga contenido inapropiado
-    const nameCheck = await checkContentModeration(fullName, "username");
-    if (!nameCheck.isAppropriate) {
-      logger.warn("Signup rejected: inappropriate full name", {
+    // Check content moderation for full name
+    try {
+      const nameCheck = await checkContentModeration(fullName, "username");
+      if (!nameCheck.isAppropriate) {
+        logger.warn("Signup rejected: inappropriate full name", {
+          email,
+          reason: nameCheck.reason,
+        });
+        return res
+          .status(400)
+          .json({ message: nameCheck.reason || "Inappropriate name" });
+      }
+    } catch (error) {
+      logger.error("Error checking username", {
         email,
-        reason: nameCheck.reason,
+        error: error.message,
       });
       return res
-        .status(400)
-        .json({ message: nameCheck.reason || "Nombre inapropiado." });
+        .status(500)
+        .json({ message: "Server content filtering error" });
     }
 
-    const user = await User.findOne({ email }); // Search for existing user
+    // Hash password
+    if (password.length < 6) {
+      return res
+        .status(400)
+        .json({ message: "Password must be at least 6 characters long" });
+    }
 
-    if (user) return res.status(400).json({ message: "User already exists." });
-
-    const salt = await bcrypt.genSalt(10); // Generates salt
-    const hashedPassword = await bcrypt.hash(password, salt); // Generates hashed password
+    const salt = await bcrypt.genSalt();
+    const hashedPassword = await bcrypt.hash(password, salt);
 
     const newUser = new User({
       fullName,
@@ -53,93 +69,102 @@ export const signup = async (req, res) => {
       password: hashedPassword,
     });
 
-    if (newUser) {
-      // If user is created
-      generateToken(newUser._id, res); // Generate JWT (token)
+    await newUser.save();
 
-      await newUser.save(); // Save user to database
+    generateToken(newUser._id, res);
 
-      logger.info("User signup successful", {
-        userId: newUser._id,
-        email: newUser.email,
-      });
+    logger.info("User signup successful", {
+      userId: newUser._id,
+      email: newUser.email,
+    });
 
-      res.status(201).json({
-        message: "User created successfully.",
-        // Response status code and user data
+    res.status(201).json({
+      message: "User created successfully",
+      user: {
         _id: newUser._id,
         fullName: newUser.fullName,
         email: newUser.email,
         profilePic: newUser.profilePic,
         createdAt: newUser.createdAt,
         updatedAt: newUser.updatedAt,
-      });
-    } else {
-      // If user is not created
-      res.status(400).json({ message: "Invalid user data." });
-    }
+      },
+    });
   } catch (error) {
-    // If there is an error
-    console.log("Error signing up user: ", error);
-    return res.status(500).json({ message: "Server error: " + error });
+    logger.error("Error signing up user", {
+      error: error.message,
+      email,
+      stack: error.stack,
+    });
+    console.error("Error signing up user:", error);
+    res.status(500).json({ message: "Server error: " + error.message });
   }
 };
 
 export const login = async (req, res) => {
-  // Extract user data
   const { email, password } = req.body;
 
   try {
+    console.log("Login attempt:", { email });
+
     if (!email || !password) {
-      // Checks email and password not null
-      return res.status(400).json({ message: "All fields are required." });
+      return res.status(400).json({ message: "All fields are required" });
     }
 
-    const user = await User.findOne({ email }); // Search for existing user
+    const user = await User.findOne({ email });
+    if (!user) {
+      logger.warn("Login failed: User not found", { email });
+      return res.status(400).json({ message: "Invalid credentials" });
+    }
 
-    if (!user) return res.status(400).json({ message: "User does not exist." }); // Returns if user does not exist
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      logger.warn("Login failed: Invalid password", { email });
+      return res.status(400).json({ message: "Invalid credentials" });
+    }
 
-    const isMatch = await bcrypt.compare(password, user.password); // Checks if password is correct
-
-    if (!isMatch)
-      // Returns if password is incorrect
-      return res.status(400).json({ message: "Invalid credentials." });
-
-    generateToken(user._id, res); // Generate JWT (token)
+    generateToken(user._id, res);
 
     logger.info("User login successful", {
       userId: user._id,
       email: user.email,
     });
 
-    // Returns user data as response body (_id is automatically generated by mongoDB)
     res.status(200).json({
-      message: "Login successful.",
-      _id: user._id.toString(),
-      fullName: user.fullName,
-      email: user.email,
-      profilePic: user.profilePic,
-      createdAt: user.createdAt,
-      updatedAt: user.updatedAt,
+      message: "Login successful",
+      user: {
+        _id: user._id.toString(),
+        fullName: user.fullName,
+        email: user.email,
+        profilePic: user.profilePic,
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt,
+      },
     });
   } catch (error) {
-    logger.error("Error logging in user", { error: error.message });
-    res.status(500).json({ message: "Server error: " + error });
+    logger.error("Error logging in user", {
+      error: error.message,
+      email,
+      stack: error.stack,
+    });
+    res.status(500).json({ message: "Server error: " + error.message });
   }
 };
 
 export const logout = async (req, res) => {
   try {
-    res.cookie("jwt", "", {
-      // Clear cookie
-      maxAge: 0,
-    });
-    res.status(200).json({ message: "Logout successful." });
-    logger.info("User logout successful", { userId: req.user._id });
+    res.cookie("jwt", "", { maxAge: 0 });
+
+    if (req.user) {
+      logger.info("User logout successful", { userId: req.user._id });
+    }
+
+    res.status(200).json({ message: "Logout successful" });
   } catch (error) {
-    // If there is an error
-    logger.error("Error logging out user", { error: error.message });
-    return res.status(500).json({ message: "Server error: " + error });
+    logger.error("Error logging out user", {
+      error: error.message,
+      userId: req.user?._id,
+    });
+    res.status(500).json({ message: "Server error: " + error.message });
   }
 };
 
@@ -149,14 +174,12 @@ export const updateProfile = async (req, res) => {
     const userId = req.user._id;
 
     if (!profilePic) {
-      return res.status(400).json({ message: "Profile picture is required." }); // Done like this because I wanted to use Cloudinary
+      return res.status(400).json({ message: "Profile picture is required" });
     }
 
     if (!cloudinary.config().cloud_name) {
-      console.error("Cloudinary no está configurado");
-      return res
-        .status(500)
-        .json({ message: "Error de configuración del servidor" });
+      console.error("Cloudinary is not configured");
+      return res.status(500).json({ message: "Server configuration error" });
     }
 
     const uploadResponse = await cloudinary.uploader.upload(profilePic, {
@@ -166,31 +189,39 @@ export const updateProfile = async (req, res) => {
 
     const updatedUser = await User.findByIdAndUpdate(
       userId,
-      {
-        profilePic: uploadResponse.secure_url,
-      },
+      { profilePic: uploadResponse.secure_url },
       { new: true },
     ).select("-password");
 
     res.status(200).json({
-      _id: updatedUser._id,
-      fullName: updatedUser.fullName,
-      email: updatedUser.email,
-      profilePic: updatedUser.profilePic,
-      createdAt: updatedUser.createdAt,
-      updatedAt: updatedUser.updatedAt,
+      message: "Profile updated successfully",
+      user: {
+        _id: updatedUser._id,
+        fullName: updatedUser.fullName,
+        email: updatedUser.email,
+        profilePic: updatedUser.profilePic,
+        createdAt: updatedUser.createdAt,
+        updatedAt: updatedUser.updatedAt,
+      },
     });
   } catch (error) {
-    console.log("Cloudinary Error updating profile: ", error);
-    res.status(500).json({ message: "Server error: " + error });
+    console.error("Cloudinary Error updating profile:", error);
+    logger.error("Error updating profile", {
+      userId: req.user?._id,
+      error: error.message,
+    });
+    res.status(500).json({ message: "Server error: " + error.message });
   }
 };
 
 export const checkAuth = (req, res) => {
   try {
-    res.status(200).json({ user: req.user });
+    res.status(200).json({
+      message: "User authenticated",
+      user: req.user,
+    });
   } catch (error) {
-    console.log("Error checking auth: ", error);
-    res.status(500).json({ message: "Server error: " + error });
+    console.error("Error checking auth:", error);
+    res.status(500).json({ message: "Server error: " + error.message });
   }
 };
