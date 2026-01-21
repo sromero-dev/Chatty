@@ -7,13 +7,31 @@ import {
   checkAuth,
 } from "../controller/auth.controller.js";
 import { protectRoute } from "../middleware/auth.middleware.js";
+import { loginLimiter, signupLimiter } from "../lib/rateLimiter.js";
+import {
+  signupValidators,
+  loginValidators,
+  handleValidationErrors,
+} from "../lib/validators.js";
 
 // Express Router
 const router = express.Router();
 
 // Public Routes
-router.post("/signup", signup);
-router.post("/login", login);
+router.post(
+  "/signup",
+  signupLimiter,
+  signupValidators,
+  handleValidationErrors,
+  signup,
+);
+router.post(
+  "/login",
+  loginLimiter,
+  loginValidators,
+  handleValidationErrors,
+  login,
+);
 router.post("/logout", logout);
 
 router.put("/update-profile", protectRoute, updateProfile);
