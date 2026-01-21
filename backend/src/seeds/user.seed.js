@@ -2,23 +2,32 @@ import { config } from "dotenv";
 import { connectDB } from "../lib/db.js";
 import User from "../model/user.model.js";
 import Message from "../model/message.model.js";
-
+import bcrypt from "bcryptjs";
 config();
 
-const users = [
-  {
-    email: "alex@example.com",
-    fullName: "Alex",
-    password: "123456",
-    profilePic: "",
-  },
-  {
-    email: "sam@example.com",
-    fullName: "Sam",
-    password: "123456",
-    profilePic: "",
-  },
-];
+// Hashear las contraseñas ANTES de definir el array
+const hashPassword = async (password) => {
+  const salt = await bcrypt.genSalt();
+  return await bcrypt.hash(password, salt);
+};
+
+// Usamos una función asíncrona para crear los usuarios con contraseñas hasheadas
+const createSeedUsers = async () => {
+  return [
+    {
+      email: "alex@example.com",
+      fullName: "Alex",
+      password: await hashPassword("123456"), // Contraseña hasheada
+      profilePic: "",
+    },
+    {
+      email: "sam@example.com",
+      fullName: "Sam",
+      password: await hashPassword("123456"), // Contraseña hasheada
+      profilePic: "",
+    },
+  ];
+};
 
 const seedData = async () => {
   try {
@@ -29,10 +38,11 @@ const seedData = async () => {
     await Message.deleteMany({});
     console.log("Base de datos limpiada");
 
-    // Crear usuarios
+    // Crear usuarios con contraseñas hasheadas
+    const users = await createSeedUsers(); // 👈 Esperar a que se hasheen las contraseñas
     const createdUsers = await User.insertMany(users);
     const [alex, sam] = createdUsers;
-    console.log("Usuarios creados exitosamente");
+    console.log("Usuarios creados exitosamente con contraseñas hasheadas");
 
     // Crear conversación de ejemplo
     const messages = [
