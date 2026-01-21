@@ -4,7 +4,9 @@ import { axiosInstance } from "../lib/axios";
 import { io } from "socket.io-client";
 
 const BASE_URL =
-  import.meta.env.MODE === "development" ? "http://localhost:5001/api" : "/";
+  import.meta.env.MODE === "development"
+    ? import.meta.env.VITE_API_URL || "http://localhost:5000"
+    : "/";
 
 export const useAuthStore = create((set, get) => ({
   authUser: null,
@@ -36,7 +38,6 @@ export const useAuthStore = create((set, get) => ({
       set({ isSigningUp: true });
       const res = await axiosInstance.post("/auth/signup", data);
       set({ authUser: res.data });
-      console.log("AuthUser: " + res.data);
       toast.success("Account created successfully");
 
       get().connectSocket();
