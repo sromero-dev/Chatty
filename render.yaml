@@ -1,18 +1,15 @@
 services:
-  # Backend (API)
+  # Monorepo - Backend + Frontend estático
   - type: web
-    name: chatty-backend
+    name: chatty
     runtime: node
-    rootDir: backend
-    buildCommand: npm install
+    buildCommand: npm run build
     startCommand: npm start
     envVars:
       - key: NODE_ENV
         value: production
       - key: MONGO_URI
-        fromDatabase:
-          name: chatty-db
-          property: connectionString
+        sync: false
       - key: JWT_SECRET
         sync: false
       - key: CLOUD_NAME
@@ -21,21 +18,8 @@ services:
         sync: false
       - key: CLOUDINARY_API_SECRET
         sync: false
-      - key: FRONTEND_URL
-        value: https://chatty-frontend.onrender.com
       - key: LOG_LEVEL
         value: info
-
-  # Frontend (React/Vite)
-  - type: web
-    name: chatty-frontend
-    runtime: node
-    rootDir: frontend
-    buildCommand: npm install && npm run build
-    startCommand: npm run preview
-    envVars:
-      - key: VITE_API_URL
-        value: https://chatty-backend.onrender.com
 
   # Base de datos MongoDB
 databases:
