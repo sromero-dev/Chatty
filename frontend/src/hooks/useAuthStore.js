@@ -73,7 +73,7 @@ export const useAuthStore = create((set, get) => ({
 
       get().connectSocket();
     } catch (error) {
-      console.error("Error signing up: ", error);
+      console.error("Error logging in: ", error);
 
       let errorMessage = "An error occurred during login";
 
