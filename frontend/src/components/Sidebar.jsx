@@ -42,7 +42,7 @@ function Sidebar() {
             <span className="text-sm text-zinc-500">Show online users</span>
           </label>
           <span className="text-xs text-zinc-400">
-            ({onlineUsers.length - 1} online)
+            ({onlineUsers.length} online)
           </span>
         </div>
       </div>
