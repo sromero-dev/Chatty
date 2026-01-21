@@ -30,7 +30,7 @@ function Settings() {
     <div className="h-[calc(100vh-68px)] flex-1 overflow-hidden">
       <div
         ref={containerRef}
-        className={`h-[calc(100vh-72px)] overflow-y-auto container mx-auto px-4 pt-6 max-w-5xl relative ${
+        className={`h-[calc(100vh-72px)] overflow-y-auto container mx-auto px-4 pt-6 pb-20 max-w-5xl relative ${
           isShowing ? "overflow-hidden" : ""
         }`}
       >
@@ -155,12 +155,12 @@ function Settings() {
         </div>
 
         {/* Sticky Button Container */}
-        <div className="fixed bottom-8 pb-6 left-1/2 transform -translate-x-1/2 z-40">
+        <div className="fixed bottom-6 pb-4 left-1/2 transform -translate-x-1/2 z-40">
           <div className="relative">
             <div className="rounded-full shadow-2xl overflow-hidden">
               <button
                 ref={buttonRef}
-                className="btn btn-primary btn-lg rounded-full px-8 gap-2 transition-all duration-300 hover:scale-105 active:scale-95 border-0"
+                className="btn btn-primary btn-md rounded-full px-6 gap-2 transition-all duration-300 hover:scale-105 active:scale-95 border-0"
                 onClick={togglePreview}
               >
                 <span className="font-semibold">

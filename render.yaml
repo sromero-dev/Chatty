@@ -3,26 +3,53 @@ services:
   - type: web
     name: chatty
     runtime: node
-    buildCommand: npm ci --prefix backend && npm install --legacy-peer-deps --prefix frontend && npm run build --prefix frontend
+    plan: free # Cambiar a "starter" ($7/mes) para producción
+
+    # Comandos de build y start
+    buildCommand: >
+      npm ci --prefix backend &&
+      npm install --legacy-peer-deps --prefix frontend &&
+      npm run build --prefix frontend
+
     startCommand: npm start
+
+    # Health check endpoint
+    healthCheckPath: /health
+
+    # Variables de entorno requeridas
     envVars:
+      # Sistema
       - key: NODE_ENV
         value: production
-      - key: MONGO_URI
-        sync: false
-      - key: JWT_SECRET
-        sync: false
-      - key: CLOUD_NAME
-        sync: false
-      - key: CLOUDINARY_API_KEY
-        sync: false
-      - key: CLOUDINARY_API_SECRET
-        sync: false
+
       - key: LOG_LEVEL
         value: info
 
-  # Base de datos MongoDB
+      # Base de datos MongoDB
+      - key: MONGO_URI
+        sync: false # No sincronizar - valor sensitivo
+
+      # Autenticación JWT
+      - key: JWT_SECRET
+        sync: false # No sincronizar - valor sensitivo
+
+      # Cloudinary (almacenamiento de imágenes)
+      - key: CLOUD_NAME
+        sync: false
+
+      - key: CLOUDINARY_API_KEY
+        sync: false
+
+      - key: CLOUDINARY_API_SECRET
+        sync: false # No sincronizar - valor sensitivo
+
+      # Frontend URL (para CORS en producción)
+      - key: FRONTEND_URL
+        sync: false
+
+# Base de datos MongoDB (opcional)
+# Nota: Usar MongoDB Atlas (gratuito) es más simple que Render managed DB
 databases:
   - name: chatty-db
-    databaseCluster: oregon
-    ipAllowList: []
+    databaseCluster: oregon # Regiones: oregon, frankfurt, sydney, singapore
+    ipAllowList: [] # Render proporciona IPs automáticamente
