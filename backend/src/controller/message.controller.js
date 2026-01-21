@@ -2,6 +2,8 @@ import User from "../model/user.model.js";
 import Message from "../model/message.model.js";
 import cloudinary from "../lib/cloudinary.js";
 import { getRecieverSocketId, io } from "../lib/socket.js";
+import logger from "../lib/logger.js";
+import sharp from "sharp";
 
 export const getUsersForSidebar = async (req, res) => {
   try {
@@ -11,9 +13,12 @@ export const getUsersForSidebar = async (req, res) => {
       _id: { $ne: loggedInUserId },
     }).select("-password"); // Select password from decoded cookied user
 
+    logger.info(`Retrieved ${filteredUsers.length} users for sidebar`);
     res.status(200).json(filteredUsers); // Returns filtered users
   } catch (error) {
-    console.error(error);
+    logger.error("Error retrieving users for sidebar", {
+      error: error.message,
+    });
     res.status(500).json({ message: "Server error: " + error });
   }
 };
@@ -24,16 +29,50 @@ export const getMessages = async (req, res) => {
     const { id: userToChatId } = req.params;
     const myId = req.user._id;
 
-    const messages = await Message.find({
+    // Paginación
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 50;
+    const skip = (page - 1) * limit;
+
+    // Contar total de mensajes para paginación
+    const total = await Message.countDocuments({
       $or: [
         { senderId: myId, recieverId: userToChatId },
         { senderId: userToChatId, recieverId: myId },
       ],
     });
 
-    res.status(200).json(messages);
+    const messages = await Message.find({
+      $or: [
+        { senderId: myId, recieverId: userToChatId },
+        { senderId: userToChatId, recieverId: myId },
+      ],
+    })
+      .populate("senderId", "fullName profilePic")
+      .populate("recieverId", "fullName profilePic")
+      .sort({ createdAt: 1 })
+      .skip(skip)
+      .limit(limit);
+
+    logger.info(`Retrieved ${messages.length} messages for conversation`, {
+      userId: myId,
+      otherUserId: userToChatId,
+      page,
+      limit,
+      total,
+    });
+
+    res.status(200).json({
+      messages,
+      pagination: {
+        current: page,
+        limit,
+        total,
+        pages: Math.ceil(total / limit),
+      },
+    });
   } catch (error) {
-    console.error(error);
+    logger.error("Error retrieving messages", { error: error.message });
     res.status(500).json({ message: "Server error: " + error });
   }
 };
@@ -43,11 +82,51 @@ export const sendMessage = async (req, res) => {
     const { text, image } = req.body;
     const { id: recieverId } = req.params;
 
+    // Validate that at least text or image is provided
+    if (!text?.trim() && !image) {
+      return res.status(400).json({ message: "Text or image is required." });
+    }
+
     let imageUrl;
     if (image) {
-      // Upload base64 image to Cloudinary
-      const uploadResponde = await cloudinary.uploader.upload(image);
-      imageUrl = uploadResponde.secure_url;
+      try {
+        // Comprimir imagen si es muy grande (mayor a 1MB)
+        let processedImage = image;
+        if (image.length > 1024 * 1024) {
+          // Si imagen > 1MB, comprimir con sharp
+          const buffer = Buffer.from(image, "base64");
+          const compressedBuffer = await sharp(buffer)
+            .resize(1000, 1000, {
+              fit: "inside",
+              withoutEnlargement: true,
+            })
+            .jpeg({ quality: 80 })
+            .toBuffer();
+          processedImage = compressedBuffer.toString("base64");
+          logger.info("Imagen comprimida exitosamente", {
+            originalSize: image.length,
+            compressedSize: processedImage.length,
+          });
+        }
+
+        // Upload a Cloudinary
+        const uploadResponse = await cloudinary.uploader.upload(
+          `data:image/jpeg;base64,${processedImage}`,
+          {
+            resource_type: "image",
+            quality: "auto:eco",
+          },
+        );
+        imageUrl = uploadResponse.secure_url;
+        logger.info("Imagen subida a Cloudinary exitosamente", {
+          url: imageUrl,
+        });
+      } catch (uploadError) {
+        logger.error("Error subiendo imagen a Cloudinary", {
+          error: uploadError.message,
+        });
+        return res.status(400).json({ message: "Error uploading image" });
+      }
     }
 
     const newMessage = new Message({
@@ -58,6 +137,11 @@ export const sendMessage = async (req, res) => {
     });
 
     await newMessage.save();
+    logger.info("Mensaje enviado exitosamente", {
+      from: req.user._id,
+      to: recieverId,
+      hasImage: !!imageUrl,
+    });
 
     const recieverSocketId = getRecieverSocketId(recieverId);
     if (recieverSocketId) {
@@ -66,7 +150,7 @@ export const sendMessage = async (req, res) => {
 
     res.status(200).json(newMessage);
   } catch (error) {
-    console.error(error);
+    logger.error("Error sending message", { error: error.message });
     res.status(500).json({ message: "Server error: " + error });
   }
 };
