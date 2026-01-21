@@ -4,7 +4,7 @@
   "description": "Para el backend: node.js, express.js, mongoDB y socket.io",
   "main": "index.js",
   "scripts": {
-    "build": "npm ci --prefix backend && npm ci --prefix frontend --legacy-peer-deps && npm run build --prefix frontend",
+    "build": "npm ci --prefix backend && npm install --legacy-peer-deps --prefix frontend && npm run build --prefix frontend",
     "start": "node backend/src/index.js"
   },
   "repository": {
