@@ -1,0 +1,44 @@
+services:
+  # Backend (API)
+  - type: web
+    name: chatty-backend
+    runtime: node
+    rootDir: backend
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: MONGO_URI
+        fromDatabase:
+          name: chatty-db
+          property: connectionString
+      - key: JWT_SECRET
+        sync: false
+      - key: CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
+      - key: FRONTEND_URL
+        value: https://chatty-frontend.onrender.com
+      - key: LOG_LEVEL
+        value: info
+
+  # Frontend (React/Vite)
+  - type: web
+    name: chatty-frontend
+    runtime: node
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    startCommand: npm run preview
+    envVars:
+      - key: VITE_API_URL
+        value: https://chatty-backend.onrender.com
+
+  # Base de datos MongoDB
+databases:
+  - name: chatty-db
+    databaseCluster: oregon
+    ipAllowList: []
