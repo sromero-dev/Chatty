@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "build": "npm install --prefix backend && npm install --legacy-peer-deps --prefix frontend && npm run build --prefix frontend",
-    "start": "node backend/src/index.js"
+    "start": "node backend/src/index.js",
+    "postinstall": "npm install --prefix backend && npm install --legacy-peer-deps --prefix frontend"
   },
   "repository": {
     "type": "git",

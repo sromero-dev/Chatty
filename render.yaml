@@ -3,7 +3,7 @@ services:
   - type: web
     name: chatty
     runtime: node
-    buildCommand: npm install --prefix backend && npm install --legacy-peer-deps --prefix frontend && npm run build --prefix frontend
+    buildCommand: npm install --legacy-peer-deps && npm run build
     startCommand: npm start
     envVars:
       - key: NODE_ENV
