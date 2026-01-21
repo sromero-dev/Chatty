@@ -4,6 +4,10 @@ import cloudinary from "../lib/cloudinary.js";
 import { getRecieverSocketId, io } from "../lib/socket.js";
 import logger from "../lib/logger.js";
 import sharp from "sharp";
+import {
+  checkContentModeration,
+  checkImageModeration,
+} from "../lib/contentFilter.js";
 
 export const getUsersForSidebar = async (req, res) => {
   try {
@@ -87,9 +91,42 @@ export const sendMessage = async (req, res) => {
       return res.status(400).json({ message: "Text or image is required." });
     }
 
+    // Verificar que el contenido del mensaje no sea inapropiado
+    if (text?.trim()) {
+      const contentCheck = await checkContentModeration(text, "message");
+      if (!contentCheck.isAppropriate) {
+        logger.warn("Message rejected: inappropriate content", {
+          senderId: req.user._id,
+          recieverId,
+          reason: contentCheck.reason,
+        });
+        return res.status(400).json({
+          message:
+            contentCheck.reason ||
+            "Mensaje rechazado: contiene contenido inapropiado",
+        });
+      }
+    }
+
     let imageUrl;
     if (image) {
       try {
+        // Verificar que la imagen no contiene contenido inapropiado ANTES de procesarla
+        logger.info("Checking image moderation...");
+        const imageCheck = await checkImageModeration(image);
+        if (!imageCheck.isAppropriate) {
+          logger.warn("Image rejected: inappropriate content", {
+            senderId: req.user._id,
+            recieverId,
+            reason: imageCheck.reason,
+          });
+          return res.status(400).json({
+            message:
+              imageCheck.reason ||
+              "Imagen rechazada: contiene contenido inapropiado (sexual, violencia, gore, etc.)",
+          });
+        }
+
         // Comprimir imagen si es muy grande (mayor a 1MB)
         let processedImage = image;
         if (image.length > 1024 * 1024) {
@@ -137,18 +174,17 @@ export const sendMessage = async (req, res) => {
     });
 
     await newMessage.save();
-    logger.info("Mensaje enviado exitosamente", {
-      from: req.user._id,
-      to: recieverId,
-      hasImage: !!imageUrl,
-    });
+
+    const populatedMessage = await Message.findById(newMessage._id)
+      .populate("senderId", "fullName profilePic")
+      .populate("recieverId", "fullName profilePic");
 
     const recieverSocketId = getRecieverSocketId(recieverId);
     if (recieverSocketId) {
-      io.to(recieverSocketId).emit("newMessage", newMessage);
+      io.to(recieverSocketId).emit("newMessage", populatedMessage);
     }
 
-    res.status(200).json(newMessage);
+    res.status(200).json(populatedMessage);
   } catch (error) {
     logger.error("Error sending message", { error: error.message });
     res.status(500).json({ message: "Server error: " + error });
