@@ -13,18 +13,26 @@ backend/
 │   ├── db.js                   # MongoDB connection
 │   ├── socket.js              # Socket.io server setup
 │   ├── cloudinary.js          # Cloudinary configuration
+│   ├── logger.js              # Winston logging setup
+│   ├── rateLimiter.js         # Express rate limiting
+│   ├── validators.js          # Input validation with express-validator
 │   └── utils.js               # JWT token generation
 ├── model/                      # Mongoose data models
 │   ├── user.model.js          # User schema and model
 │   └── message.model.js       # Message schema and model
 ├── controller/                 # Request handlers
-│   ├── auth.controller.js     # Authentication logic
-│   └── message.controller.js  # Message handling logic
+│   ├── auth.controller.js     # Authentication logic with logging
+│   └── message.controller.js  # Message handling + image compression
 ├── middleware/                 # Express middleware
 │   └── auth.middleware.js     # Route protection
 ├── routes/                     # Route definitions
 │   ├── auth.route.js          # Authentication routes
 │   └── message.route.js       # Message routes
+├── logs/                       # Application logs (generated)
+│   ├── error.log              # Error logs
+│   └── combined.log           # All logs
+├── seeds/                      # Database seeding
+│   └── user.seed.js           # Sample data
 └── package.json               # Dependencies and scripts
 ```
 
@@ -55,7 +63,7 @@ app.use(
   cors({
     origin: "http://localhost:5173", // Frontend origin
     credentials: true, // Allow cookies in cross-origin requests
-  })
+  }),
 );
 ```
 
@@ -95,7 +103,7 @@ const userSchema = new mongoose.Schema(
   },
   {
     timestamps: true, // Auto-adds createdAt and updatedAt
-  }
+  },
 );
 ```
 
@@ -126,7 +134,7 @@ const messageSchema = new mongoose.Schema(
   },
   {
     timestamps: true, // Message timestamp for ordering
-  }
+  },
 );
 ```
 
@@ -498,7 +506,7 @@ if (process.env.NODE_ENV === "production") {
 
   // SPA fallback routing
   app.get("*", (req, res) =>
-    res.sendFile(path.resolve(__dirname, "frontend", "dist", "index.html"))
+    res.sendFile(path.resolve(__dirname, "frontend", "dist", "index.html")),
   );
 }
 ```
@@ -531,7 +539,7 @@ const logger = {
         message,
         ...meta,
         timestamp: new Date().toISOString(),
-      })
+      }),
     ),
   error: (error, context) =>
     console.error(
@@ -541,7 +549,7 @@ const logger = {
         stack: error.stack,
         ...context,
         timestamp: new Date().toISOString(),
-      })
+      }),
     ),
 };
 ```
@@ -687,9 +695,61 @@ npm run dev
 npm start
 ```
 
-The server will run on `http://localhost:5002` with:
+The server will run on `http://localhost:5000` with:
 
 - API endpoints under `/api/`
+- WebSocket connection for real-time messaging
+- Logging in `logs/` directory
+
+---
+
+## 🛡️ Security Features Implemented
+
+### Rate Limiting
+
+- **Signup**: 3 registros por IP por hora
+- **Login**: 5 intentos por IP cada 15 minutos
+- **Messages**: 30 mensajes por minuto
+
+Configurar en `lib/rateLimiter.js`
+
+### Input Validation
+
+- Email RFC 5322 compliant
+- Password requirements: 6+ chars, uppercase, lowercase, number
+- Full Name: 2-50 characters
+- Automatic sanitization
+
+### Image Handling
+
+- Automatic compression para imágenes > 1MB
+- Redimensionamiento a 1000x1000 máximo
+- Quality JPEG 80 balance
+
+### Logging & Monitoring
+
+```bash
+# Ver logs en tiempo real
+tail -f logs/combined.log
+
+# Ver solo errores
+tail -f logs/error.log
+```
+
+Winston logger registra:
+
+- Login/Signup/Logout eventos
+- Operaciones exitosas con contexto
+- Errores con stack traces
+- Timestamps en cada entrada
+
+---
+
+## 📖 Documentation
+
+- [OPTIMIZATIONS.md](../OPTIMIZATIONS.md) - Optimizaciones iniciales
+- [ADVANCED_FEATURES.md](../ADVANCED_FEATURES.md) - Features avanzadas
+- [API Endpoints](#endpoints) - Documentación de rutas
 - WebSocket server for real-time communication
 - MongoDB connection for data persistence
 - Cloudinary integration for image storage

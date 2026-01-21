@@ -105,7 +105,11 @@ chatty/
 │   │   ├── db.js          # MongoDB connection
 │   │   ├── socket.js      # Socket.io setup
 │   │   ├── cloudinary.js  # Cloudinary config
+│   │   ├── logger.js      # Winston logging
+│   │   ├── rateLimiter.js # Express rate limiting
+│   │   ├── validators.js  # Input validation
 │   │   └── utils.js       # JWT utilities
+│   ├── logs/              # Application logs (generated)
 │   ├── index.js           # Server entry point
 │   ├── package.json
 │   └── .env.example
@@ -145,22 +149,33 @@ chatty/
    # Edit .env with your configuration
    ```
 
-   **Required .env variables:**
+   **Backend .env variables:**
 
    ```env
-   PORT=5002
+   PORT=5000
    MONGO_URI=mongodb://localhost:27017/chatty
    JWT_SECRET=your_super_secret_jwt_key
    CLOUD_NAME=your_cloudinary_cloud_name
    CLOUDINARY_API_KEY=your_cloudinary_api_key
    CLOUDINARY_API_SECRET=your_cloudinary_api_secret
+   NODE_ENV=development
    ```
 
 4. **Set up the Frontend**
+
    ```bash
    cd ../frontend
    npm install
+   cp .env.example .env
    ```
+
+   **Frontend .env variables:**
+
+   ```env
+   VITE_API_URL=http://localhost:5000
+   ```
+
+   **Note:** The `VITE_API_URL` should match the backend's `PORT`
 
 ### Running the Application
 
@@ -198,6 +213,29 @@ chatty/
 
 ## 🔧 Configuration Details
 
+### Environment Variables
+
+#### Backend (.env)
+
+```env
+PORT=5000
+MONGO_URI=mongodb+srv://user:pass@cluster.mongodb.net/chat_db
+JWT_SECRET=your_secret_key_here
+CLOUD_NAME=your_cloudinary_cloud_name
+CLOUDINARY_API_KEY=your_cloudinary_api_key
+CLOUDINARY_API_SECRET=your_cloudinary_api_secret
+NODE_ENV=development
+LOG_LEVEL=info
+```
+
+#### Frontend (.env)
+
+```env
+VITE_API_URL=http://localhost:5000
+```
+
+**Important:** Ensure `VITE_API_URL` matches backend's `PORT`
+
 ### MongoDB Setup
 
 1. Install MongoDB locally or use MongoDB Atlas
@@ -220,12 +258,50 @@ chatty/
 - User authentication via query parameters
 - Automatic reconnection handling
 
+---
+
+## 🛡️ Security & Performance Features
+
+### Rate Limiting
+
+Protects against brute-force attacks and spam:
+
+- **Signup:** 3 registros por IP por hora
+- **Login:** 5 intentos por IP cada 15 minutos
+- **Messages:** 30 mensajes por minuto
+
+Configurar en `backend/src/lib/rateLimiter.js`
+
+### Input Validation
+
+- Email: RFC 5322 compliant
+- Password: Mínimo 6 caracteres + mayúscula + minúscula + número
+- Full Name: 2-50 caracteres
+- Sanitización automática de inputs
+
+### Image Compression
+
+- Compresión automática de imágenes > 1MB
+- Redimensionamiento a 1000x1000 máximo
+- Calidad JPEG 80 para balance tamaño/calidad
+
+### Logging
+
+Winston logger con:
+
+- Logs en archivos: `logs/error.log`, `logs/combined.log`
+- Timestamps en cada entrada
+- Stack traces para errores
+- Información contextual de operaciones
+
+---
+
 ## 📡 API Endpoints
 
 ### Authentication
 
-- `POST /api/auth/signup` - Register new user
-- `POST /api/auth/login` - User login
+- `POST /api/auth/signup` - Register new user (rate limited)
+- `POST /api/auth/login` - User login (rate limited)
 - `POST /api/auth/logout` - User logout
 - `PUT /api/auth/update-profile` - Update profile picture
 - `GET /api/auth/check` - Verify authentication status
@@ -233,8 +309,13 @@ chatty/
 ### Messages
 
 - `GET /api/messages/users` - Get users for sidebar
-- `GET /api/messages/:id` - Get messages with specific user
-- `POST /api/messages/send/:id` - Send message to user
+- `GET /api/messages/:id?page=1&limit=50` - Get messages with pagination
+- `POST /api/messages/send/:id` - Send message (rate limited)
+
+Query Parameters:
+
+- `page` - Message page number (default: 1)
+- `limit` - Messages per page (default: 50)
 
 ## 🔐 Authentication Flow
 
@@ -283,17 +364,14 @@ The application supports multiple themes via DaisyUI:
 ### Common Issues
 
 1. **MongoDB connection error**
-
    - Ensure MongoDB is running locally
    - Check connection string in `.env`
 
 2. **CORS errors**
-
    - Verify frontend URL in backend CORS configuration
    - Check that credentials are included in requests
 
 3. **Socket.io connection issues**
-
    - Ensure backend server is running
    - Check WebSocket URL in frontend
 
@@ -303,9 +381,19 @@ The application supports multiple themes via DaisyUI:
 
 ### Development Logs
 
-- Backend logs: Console output when running `npm run dev`
+- Backend logs: `logs/combined.log` y `logs/error.log`
 - Frontend logs: Browser developer tools console
 - Network requests: Monitor in browser DevTools Network tab
+- View logs in real-time: `tail -f backend/logs/combined.log`
+
+---
+
+## 📚 Documentation
+
+- [OPTIMIZATIONS.md](OPTIMIZATIONS.md) - Optimizaciones iniciales implementadas
+- [ADVANCED_FEATURES.md](ADVANCED_FEATURES.md) - Características avanzadas (Rate limiting, Validación, Paginación, etc)
+
+---
 
 ## 📱 Browser Support
 
@@ -351,7 +439,7 @@ This project demonstrates:
 - Responsive UI design
 - Deployment strategies
 
-## 🙏 Acknowledgments
+## Acknowledgments
 
 - [Vite](https://vitejs.dev/) for the excellent build tool
 - [Tailwind CSS](https://tailwindcss.com/) for the utility-first CSS
