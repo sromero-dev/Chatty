@@ -58,6 +58,7 @@ Chatty is a full-stack, real-time chat application built with modern web technol
 - **Express.js** - Web application framework
 - **MongoDB** - NoSQL database
 - **Mongoose** - ODM for MongoDB
+- **Gemini API** - Sensitive Content Filter
 - **Socket.io** - WebSocket library
 - **JWT** - JSON Web Tokens for authentication
 - **Bcrypt.js** - Password hashing
