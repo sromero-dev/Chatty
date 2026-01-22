@@ -1,5 +1,7 @@
 # 📸 Vista Previa de la Aplicación
 
+🔗[Míralo por tu cuenta!](https://chatty-9rg7.onrender.com/signup)
+
 Antes de adentrarnos en los detalles técnicos, te invitamos a explorar visualmente las principales funcionalidades de Chatty:
 
 ### 🏠 Pantalla de Inicio

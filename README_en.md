@@ -1,5 +1,7 @@
 # 📸 Application Preview
 
+🔗[View Website!](https://chatty-9rg7.onrender.com/signup)
+
 Before diving into the technical details, we invite you to visually explore Chatty's main features:
 
 ### 🏠 Home Screen
