@@ -42,7 +42,7 @@ function Sidebar() {
             <span className="text-sm text-zinc-500">Show online users</span>
           </label>
           <span className="text-xs text-zinc-400">
-            ({onlineUsers.length} online)
+            ({onlineUsers.length - 1} online)
           </span>
         </div>
       </div>
@@ -66,25 +66,23 @@ function Sidebar() {
                 className="size-12 object-cover rounded-full"
               />
               {onlineUsers.includes(user._id) && (
-                <span
-                  className={`absolute bottom-0 right-0 size-3 rounded-full ring-2 ring-zinc-900 ${
-                    user.isOnline ? "bg-green-500" : "bg-gray-400"
-                  }`}
-                />
+                <span className="absolute bottom-0 right-0 size-3 rounded-full ring-2 ring-zinc-900 bg-green-500" />
               )}
             </div>
 
             <div className="hidden lg:block text-left min-w-0 flex-1">
               <div className="font-medium truncate">{user.fullName}</div>
               <div className="text-xs text-zinc-400">
-                {user.isOnline ? "Online" : "Offline"}
+                {onlineUsers.includes(user._id) ? "Online" : "Offline"}
               </div>
             </div>
           </button>
         ))}
 
         {filteredUsers.length === 0 && (
-          <div className="text-center text-zinc-500 py-4">No online users</div>
+          <div className="text-center text-zinc-500 py-4">
+            {showOnline ? "No online users" : "No users available"}
+          </div>
         )}
       </div>
     </aside>
