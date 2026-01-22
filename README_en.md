@@ -4,6 +4,8 @@ Before diving into the technical details, we invite you to visually explore Chat
 
 ### 🏠 Home Screen
 
+<div align="center">
+
 ![Homepage](assets/homepage.png)
 _Welcome interface where users can sign up, log in, or customize the appearance_
 
@@ -36,6 +38,8 @@ _Theme selection panel with real-time preview_
 
 ![User List](assets/user_list.png)  
 _Sidebar view showing all available users to chat with_
+
+</div>
 
 ---
 

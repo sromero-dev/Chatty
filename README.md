@@ -4,6 +4,8 @@ Antes de adentrarnos en los detalles técnicos, te invitamos a explorar visualme
 
 ### 🏠 Pantalla de Inicio
 
+<div align="center">
+
 ![Página de Inicio](assets/homepage.png)
 _Interfaz de bienvenida donde los usuarios pueden registrarse, iniciar sesión o personalizar la apariencia_
 
@@ -36,6 +38,8 @@ _Panel de selección de temas con vista previa en tiempo real_
 
 ![Lista de Usuarios](assets/user_list.png)  
 _Vista de la barra lateral mostrando todos los usuarios disponibles para chatear_
+
+</div>
 
 ---
 
