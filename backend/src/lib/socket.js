@@ -19,20 +19,26 @@ io.on("connection", (socket) => {
   console.log("User connected: ", socket.id);
 
   const userId = socket.handshake.query.userId;
-  if (userId) userSocketMap[userId] = socket.id;
+  if (userId) {
+    // Asegurar que el userId se almacena como string
+    userSocketMap[userId.toString()] = socket.id;
+  }
 
-  // io.emit("onlineUsers", Object.values(userSocketMap)); sends events to all connected clients
+  // Enviar IDs como strings
   io.emit("getOnlineUsers", Object.keys(userSocketMap));
 
   socket.on("disconnect", () => {
     console.log("User disconnected: ", socket.id);
-    delete userSocketMap[userId];
+    if (userId) {
+      delete userSocketMap[userId.toString()];
+    }
     io.emit("getOnlineUsers", Object.keys(userSocketMap));
   });
 });
 
 export function getRecieverSocketId(recieverId) {
-  return userSocketMap[recieverId];
+  // Asegurar que buscamos con string
+  return userSocketMap[recieverId.toString()];
 }
 
 export { io, app, server };
