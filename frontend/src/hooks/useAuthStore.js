@@ -17,17 +17,22 @@ export const useAuthStore = create((set, get) => ({
   onlineUsers: [],
   socket: null,
 
+  // En useAuthStore.js, modifica checkAuth, signup, login:
   checkAuth: async () => {
     try {
       const res = await axiosInstance.get("/auth/check");
+      console.log("Respuesta de checkAuth:", res.data);
 
-      if (!res.data) set({ authUser: false }); // Checks if user is authenticated, does not allow Null values
-      set({ authUser: res.data });
+      if (res.data && res.data.user) {
+        set({ authUser: res.data.user }); // <-- Aquí el cambio
+      } else {
+        set({ authUser: null });
+      }
 
       get().connectSocket();
     } catch (error) {
       console.error("Error checking auth: ", error);
-      set({ authUser: false });
+      set({ authUser: null });
     } finally {
       set({ isCheckingAuth: false });
     }
@@ -37,7 +42,10 @@ export const useAuthStore = create((set, get) => ({
     try {
       set({ isSigningUp: true });
       const res = await axiosInstance.post("/auth/signup", data);
-      set({ authUser: res.data });
+      // CORREGIDO: Guardar user, no toda la respuesta
+      if (res.data && res.data.user) {
+        set({ authUser: res.data.user });
+      }
       toast.success("Account created successfully");
 
       get().connectSocket();
@@ -68,7 +76,10 @@ export const useAuthStore = create((set, get) => ({
     try {
       set({ isLoggingIn: true });
       const res = await axiosInstance.post("/auth/login", data);
-      set({ authUser: res.data });
+      // CORREGIDO: Guardar user, no toda la respuesta
+      if (res.data && res.data.user) {
+        set({ authUser: res.data.user });
+      }
       toast.success("Logged in successfully");
 
       get().connectSocket();
@@ -127,7 +138,10 @@ export const useAuthStore = create((set, get) => ({
     try {
       set({ isUpdatingProfile: true });
       const res = await axiosInstance.put("/auth/update-profile", data);
-      set({ authUser: res.data });
+      // CORREGIDO: Guardar user, no toda la respuesta
+      if (res.data && res.data.user) {
+        set({ authUser: res.data.user });
+      }
       toast.success("Profile updated successfully");
     } catch (error) {
       console.error("Error updating profile: ", error);
@@ -171,3 +185,5 @@ export const useAuthStore = create((set, get) => ({
     if (get().socket?.connected) get().socket.disconnect();
   },
 }));
+
+export default useAuthStore;

@@ -45,6 +45,13 @@ export const useChatStore = create((set, get) => ({
     const { selectedUser, messages } = get();
     const authUser = useAuthStore.getState().authUser; // Obtener authUser
 
+    // Añade validación
+    if (!authUser || !authUser._id) {
+      console.error("authUser no tiene estructura correcta:", authUser);
+      toast.error("Error: usuario no autenticado correctamente");
+      return;
+    }
+
     //  Crear un mensaje temporal optimista con estructura poblada
     const tempMessage = {
       _id: Date.now().toString(),
@@ -81,22 +88,59 @@ export const useChatStore = create((set, get) => ({
 
   subscribeToMessages: () => {
     const { selectedUser } = get();
-
     if (!selectedUser) return;
 
     const socket = useAuthStore.getState().socket;
-    socket.on("newMessage", (newMessage) => {
-      // 👇 Comparar correctamente considerando que senderId puede ser objeto o string
-      const senderId = newMessage.senderId._id
-        ? newMessage.senderId._id
-        : newMessage.senderId;
+    if (!socket) return;
 
-      const isMessageSentBySelectedUser = senderId === selectedUser._id;
+    const messageHandler = (newMessage) => {
+      console.log("Nuevo mensaje recibido en tiempo real:", newMessage);
 
-      if (!isMessageSentBySelectedUser) return;
+      // Verificar si el mensaje es para esta conversación
+      const currentSelectedUser = get().selectedUser;
+      if (!currentSelectedUser) return;
 
-      set({ messages: [...get().messages, newMessage] });
-    });
+      const authUser = useAuthStore.getState().authUser;
+      if (!authUser) return;
+
+      // Obtener IDs para comparación (convertir a strings)
+      const getMessageSenderId = (msg) => {
+        if (!msg.senderId) return null;
+        if (typeof msg.senderId === "string") return msg.senderId;
+        if (msg.senderId._id) return msg.senderId._id.toString();
+        return null;
+      };
+
+      const senderId = getMessageSenderId(newMessage);
+      const receiverId =
+        typeof newMessage.recieverId === "object"
+          ? newMessage.recieverId._id?.toString()
+          : newMessage.recieverId?.toString();
+
+      // Verificar si el mensaje es para esta conversación
+      const isMessageForThisChat =
+        (senderId === currentSelectedUser._id.toString() &&
+          receiverId === authUser._id.toString()) ||
+        (senderId === authUser._id.toString() &&
+          receiverId === currentSelectedUser._id.toString());
+
+      if (isMessageForThisChat) {
+        console.log(
+          "Mensaje agregado al chat actual:",
+          newMessage.text?.substring(0, 30),
+        );
+        set({ messages: [...get().messages, newMessage] });
+      } else {
+        console.log("Mensaje ignorado - no es para este chat");
+      }
+    };
+
+    socket.on("newMessage", messageHandler);
+
+    // Devolver función de cleanup
+    return () => {
+      socket.off("newMessage", messageHandler);
+    };
   },
 
   unsubscribeFromMessages: () => {
@@ -105,6 +149,12 @@ export const useChatStore = create((set, get) => ({
   },
 
   setSelectedUser: (user) => {
+    // Permitir establecer null para cerrar el chat
+    if (user === null) {
+      set({ selectedUser: null, messages: [] });
+      return;
+    }
+
     const currentSelectedUser = get().selectedUser;
 
     // Si es el mismo usuario, no hacer nada
