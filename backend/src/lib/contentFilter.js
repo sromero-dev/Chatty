@@ -189,23 +189,43 @@ export const validateContentFields = async (fields) => {
   };
 };
 
-/**
- * Verifica si una imagen contiene contenido inapropiado usando Gemini Vision
- * @param {string} imageBase64 - Imagen en formato base64 (con o sin prefijo data:)
- * @returns {Promise<{isAppropriate: boolean, reason?: string, confidence?: number}>}
- */
+// Agregar una lista de códigos de error de Gemini para reconocer problemas de cuota
+const GEMINI_QUOTA_ERRORS = [
+  "RESOURCE_EXHAUSTED",
+  "QUOTA_EXCEEDED",
+  "RATE_LIMIT_EXCEEDED",
+  "429",
+];
+
+// Actualizar la función checkImageModeration
 export const checkImageModeration = async (imageBase64) => {
   if (!imageBase64 || imageBase64.trim().length === 0) {
     return { isAppropriate: true };
   }
 
   try {
+    // Verificar tamaño de la imagen antes de procesar (5MB máximo)
+    const imageSize = Buffer.byteLength(imageBase64, "base64");
+    if (imageSize > 5 * 1024 * 1024) {
+      // 5MB
+      logger.warn("Image too large for moderation", { size: imageSize });
+      // En lugar de rechazar, permitir con advertencia
+      return {
+        isAppropriate: true,
+        reason: "Image too large for moderation check",
+        bypassed: true,
+      };
+    }
+
     // Si no hay API key de Gemini, usar fallback (aceptar imagen)
     if (!process.env.GEMINI_API_KEY) {
       logger.warn(
         "GEMINI_API_KEY not configured, accepting image without moderation",
       );
-      return { isAppropriate: true };
+      return {
+        isAppropriate: true,
+        bypassed: true,
+      };
     }
 
     // Limpiar el prefijo data: si está presente
@@ -252,14 +272,22 @@ export const checkImageModeration = async (imageBase64) => {
         response: responseText,
         error: parseError.message,
       });
-      // En caso de error al parsear, aceptar la imagen por seguridad
-      return { isAppropriate: true };
+      // En caso de error al parsear, aceptar la imagen por seguridad con advertencia
+      return {
+        isAppropriate: true,
+        reason: "Moderation service temporarily unavailable",
+        bypassed: true,
+      };
     }
 
     // Validar estructura de respuesta
     if (typeof result.isAppropriate !== "boolean") {
       logger.warn("Invalid image moderation response structure", { result });
-      return { isAppropriate: true };
+      return {
+        isAppropriate: true,
+        reason: "Invalid moderation response",
+        bypassed: true,
+      };
     }
 
     // Si se detectó contenido inapropiado
@@ -268,15 +296,41 @@ export const checkImageModeration = async (imageBase64) => {
         reason: result.reason,
         confidence: result.confidence,
       });
+      result.bypassed = false;
+    } else {
+      result.bypassed = false;
     }
 
     return result;
   } catch (error) {
+    // Verificar si es error de cuota/limite
+    const errorMessage = error.message || "";
+    const isQuotaError = GEMINI_QUOTA_ERRORS.some(
+      (errorCode) =>
+        errorMessage.includes(errorCode) ||
+        errorMessage.includes(errorCode.toLowerCase()),
+    );
+
+    if (isQuotaError) {
+      logger.warn("Gemini quota exceeded, allowing image with warning", {
+        error: error.message,
+      });
+      return {
+        isAppropriate: true,
+        reason: "Moderation quota exceeded - image allowed",
+        bypassed: true,
+      };
+    }
+
     logger.error("Gemini Image Moderation Error", {
       error: error.message,
     });
-    // En caso de error, aceptar la imagen por seguridad
-    return { isAppropriate: true };
+    // En caso de error, aceptar la imagen por seguridad con advertencia
+    return {
+      isAppropriate: true,
+      reason: "Moderation service error - image allowed",
+      bypassed: true,
+    };
   }
 };
 
